@@ -1,6 +1,65 @@
 <template>
   <div>
     <h1>List of Employees</h1>
+    <!-- Search Form -->
+    <div id="search-container">
+      <h2>Tìm kiếm nhân viên</h2>
+      <form @submit.prevent="searchEmployees">
+        <div class="form-row">
+          <div>
+            <label for="name">Tên (Tìm kiếm gần đúng):</label>
+            <input id="name" v-model="searchCriteria.name" type="text" />
+          </div>
+          <div>
+            <label for="dob-from">Ngày sinh từ:</label>
+            <input id="dob-from" v-model="searchCriteria.dobFrom" type="date" />
+          </div>
+          <div>
+            <label for="dob-to">Ngày sinh đến:</label>
+            <input id="dob-to" v-model="searchCriteria.dobTo" type="date" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="gender">Giới tính:</label>
+            <select id="gender" v-model="searchCriteria.gender">
+              <option value="">Tất cả</option>
+              <option value="MALE">Nam</option>
+              <option value="FEMALE">Nữ</option>
+              <option value="OTHER">Khác</option>
+            </select>
+          </div>
+          <div>
+            <label for="salaryRange">Mức lương:</label>
+            <select id="salaryRange" v-model="searchCriteria.salaryRange">
+              <option value="">Tất cả</option>
+              <option value="1-5">Dưới 5 triệu</option>
+              <option value="5-10">Từ 5 - 10 triệu</option>
+              <option value="10-20">Từ 10 - 20 triệu</option>
+              <option value="gt20">Trên 20 triệu</option>
+            </select>
+          </div>
+          <div>
+            <label for="phone">Số điện thoại (Tìm kiếm gần đúng):</label>
+            <input id="phone" v-model="searchCriteria.phone" type="text" />
+          </div>
+        </div>
+
+        <label>Bộ phận:</label>
+        <select v-model="searchCriteria.departmentId" :disabled="isViewMode" id="department">
+          <option value="">Tất cả</option>
+          <option v-for="department in departments" :key="department.id" :value="department.id">
+            {{ department.name }}
+          </option>
+        </select><br />
+
+        <div class="form-actions">
+          <button type="button" class="btn-reset" @click="resetSearch">Đặt lại</button>
+          <button @click="fetchEmployees()" class="btn-search">Tìm kiếm</button>
+        </div>
+      </form>
+    </div>
+
     <button class="btn btn-success" @click="openAddModal">+ Add new</button>
     <table class="employee-table">
       <thead>
@@ -82,39 +141,55 @@
           <input v-model="currentEmployee.salary" type="number" step="1000" required />
 
           <button type="submit" class="btn btn-primary">Update</button>
-<button type="button" class="btn btn-secondary" @click="closeUpdateModal">Cancel</button>
+          <button type="button" class="btn btn-secondary" @click="closeUpdateModal">Cancel</button>
         </form>
       </div>
     </div>
   </div>
 </template>
+
 <script>
 import axios from 'axios';
 
 export default {
   data() {
     return {
-      employees: [], // List of employees
-      showAddModal: false, // Controls visibility of the Add modal
-      showUpdateModal: false, // Controls visibility of the Update modal
+      employees: [],
+      showAddModal: false,
+      showUpdateModal: false,
+      searchCriteria: {
+        name: '',
+        dobFrom: '',
+        dobTo: '',
+        gender: '',
+        salaryRange: '',
+        phone: '',
+        departmentId: '',
+      },
       newEmployee: {
         name: '',
         dob: '',
         gender: 'Nam',
         salary: 0,
-      }, // New employee data
+      },
       currentEmployee: {
         id: null,
         name: '',
         dob: '',
         gender: 'Nam',
         salary: 0,
-      }, // Data of the employee being updated
-      currentEmployeeIndex: null, // Index of the employee being updated
+      },
+      currentEmployeeIndex: null,
+      departments: [
+        { id: 1, name: 'Sales' },
+        { id: 2, name: 'HR' },
+        { id: 3, name: 'IT' },
+      ],
+      isViewMode: false,
     };
   },
   mounted() {
-    this.fetchEmployees(); // Fetch employee data from server when the component is mounted
+    this.fetchEmployees();
   },
   methods: {
     async fetchEmployees() {
@@ -124,6 +199,10 @@ export default {
       } catch (error) {
         console.error("Error fetching employee data:", error);
       }
+    },
+    searchEmployees() {
+      console.log('Searching with criteria:', this.searchCriteria);
+      // Perform search with the provided criteria
     },
     openAddModal() {
       this.showAddModal = true;
@@ -141,15 +220,13 @@ export default {
       };
     },
     addNewEmployee() {
-      // Add a new employee to the list
       this.employees.push({ ...this.newEmployee });
       this.closeAddModal();
     },
     openUpdateModal(employee, index) {
-      // Open the update modal and populate it with the selected employee data
       this.showUpdateModal = true;
-      this.currentEmployee = { ...employee }; // Set the data of the employee being updated
-      this.currentEmployeeIndex = index; // Store the index of the employee being updated
+      this.currentEmployee = { ...employee };
+      this.currentEmployeeIndex = index;
     },
     closeUpdateModal() {
       this.showUpdateModal = false;
@@ -166,7 +243,6 @@ export default {
       this.currentEmployeeIndex = null;
     },
     updateEmployee() {
-      // Update the employee data in the list
       if (this.currentEmployeeIndex !== null) {
         this.$set(this.employees, this.currentEmployeeIndex, this.currentEmployee);
         this.closeUpdateModal();
@@ -181,105 +257,119 @@ export default {
       alert(`Employee details: ${this.employees[index].name}`);
     },
     formatCurrency(value) {
-      return value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+      return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+    },
+    resetSearch() {
+      this.searchCriteria = {
+        name: '',
+        dobFrom: '',
+        dobTo: '',
+        gender: '',
+        salaryRange: '',
+        phone: '',
+        departmentId: '',
+      };
     },
   },
 };
 </script>
 
 <style scoped>
-h1 {
+#search-container {
+  padding: 10px;
+  background-color: #f4f4f4;
   margin-bottom: 20px;
-  text-align: center;
 }
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-row div {
+  margin-right: 20px;
+}
+
+.form-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-reset, .btn-search {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-reset {
+  background-color: #f44336;
+}
+
 .employee-table {
   width: 100%;
-  height: 100%;
   border-collapse: collapse;
   margin-top: 20px;
 }
+
 .employee-table th, .employee-table td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-  font-size: 16px;
+  padding: 8px;
+  text-align: center;
 }
+
 .employee-table th {
-  background-color: #f2f2f2;
-  font-size: 18px;
+  background-color: #4CAF50;
+  color: white;
 }
-button {
-  margin: 0 5px;
-  padding: 8px 16px;
+
+.employee-table td {
+  background-color: #f9f9f9;
+}
+
+.btn {
+  padding: 8px 12px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
 }
+
 .btn-success {
-  margin-bottom: 20px;
+  background-color: #28a745;
   color: white;
-  background-color: green;
-  padding: 10px 20px;
-  font-size: 16px;
 }
+
 .btn-primary {
+  background-color: #007bff;
   color: white;
-  background-color: blue;
 }
+
 .btn-danger {
+  background-color: #dc3545;
   color: white;
-  background-color: red;
 }
+
 .btn-info {
-  color: white;
   background-color: #17a2b8;
+  color: white;
 }
+
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
 }
+
 .modal-content {
   background: white;
-  padding: 30px;
-  border-radius: 10px;
-  width: 50%;
-  max-height: 80%;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-.modal-content h2 {
-  margin-top: 0;
-  text-align: center;
-}
-.modal-content form {
-  display: flex;
-  flex-direction: column;
-}
-.modal-content label {
-  margin: 10px 0 5px;
-  font-size: 16px;
-}
-.modal-content input, .modal-content select {
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-}
-.modal-content button {
-  margin-top: 15px;
-  padding: 10px;
-  font-size: 16px;
-}
-.btn-secondary {
-  background-color: gray;
-  color: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
 }
 </style>
